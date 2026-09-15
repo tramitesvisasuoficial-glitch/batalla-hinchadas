@@ -3,20 +3,22 @@
 import { useState } from "react";
 import { Battle, Support } from "@prisma/client";
 
+type Team = { id: string; name: string; color: string | null; logo: string | null };
+
 interface SupportFormProps {
-  battle: Battle & { supports: Support[] };
+  battle: Battle & { supports: Support[], teamA: Team, teamB: Team };
   initialTeamATotal: number;
   initialTeamBTotal: number;
 }
 
 export default function SupportForm({ battle, initialTeamATotal, initialTeamBTotal }: SupportFormProps) {
-  const [selectedTeam, setSelectedTeam] = useState<"A" | "B">("A");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(battle.teamAId || "");
   const [amount, setAmount] = useState<number>(5);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [supporterName, setSupporterName] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false); // Used only as fallback if no URL is returned
+  const [success, setSuccess] = useState(false);
 
   const total = initialTeamATotal + initialTeamBTotal;
   const progressA = total === 0 ? 50 : (initialTeamATotal / total) * 100;
@@ -26,6 +28,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentAmount <= 0) return alert("Ingresa un monto válido");
+    if (!selectedTeamId) return alert("Selecciona un equipo");
     
     setLoading(true);
     setSuccess(false);
@@ -36,7 +39,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           battleId: battle.id,
-          team: selectedTeam,
+          teamId: selectedTeamId,
           amount: currentAmount,
           currency: "USD",
           supporterName,
@@ -63,24 +66,27 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
     }
   };
 
+  const teamAColor = battle.teamA.color || "#00d2ff";
+  const teamBColor = battle.teamB.color || "#ff0055";
+
   return (
     <>
       <div className="battle-header">
         <div className="team-score team-a">
-          <div className="team-name" style={{ color: battle.teamAColor }}>{battle.teamAName}</div>
+          <div className="team-name" style={{ color: teamAColor }}>{battle.teamA.name}</div>
           <div className="score">US${initialTeamATotal.toFixed(2)}</div>
         </div>
         <div className="vs">VS</div>
         <div className="team-score team-b">
-          <div className="team-name" style={{ color: battle.teamBColor }}>{battle.teamBName}</div>
+          <div className="team-name" style={{ color: teamBColor }}>{battle.teamB.name}</div>
           <div className="score">US${initialTeamBTotal.toFixed(2)}</div>
         </div>
       </div>
 
-      <div className="progress-container" style={{ background: battle.teamBColor }}>
+      <div className="progress-container" style={{ background: teamBColor }}>
         <div 
           className="progress-a" 
-          style={{ width: `${progressA}%`, background: battle.teamAColor }}
+          style={{ width: `${progressA}%`, background: teamAColor }}
         ></div>
       </div>
 
@@ -89,26 +95,26 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         
         <div className="team-selector">
           <button 
-            onClick={() => setSelectedTeam("A")}
-            className={`team-btn ${selectedTeam === "A" ? "active" : ""}`} 
+            onClick={() => setSelectedTeamId(battle.teamAId || "")}
+            className={`team-btn ${selectedTeamId === battle.teamAId ? "active" : ""}`} 
             style={{ 
-              borderColor: battle.teamAColor, 
-              color: selectedTeam === "A" ? "#000" : battle.teamAColor,
-              background: selectedTeam === "A" ? battle.teamAColor : "transparent"
+              borderColor: teamAColor, 
+              color: selectedTeamId === battle.teamAId ? "#000" : teamAColor,
+              background: selectedTeamId === battle.teamAId ? teamAColor : "transparent"
             }}
           >
-            {battle.teamAName}
+            {battle.teamA.name}
           </button>
           <button 
-            onClick={() => setSelectedTeam("B")}
-            className={`team-btn ${selectedTeam === "B" ? "active" : ""}`} 
+            onClick={() => setSelectedTeamId(battle.teamBId || "")}
+            className={`team-btn ${selectedTeamId === battle.teamBId ? "active" : ""}`} 
             style={{ 
-              borderColor: battle.teamBColor, 
-              color: selectedTeam === "B" ? "#000" : battle.teamBColor,
-              background: selectedTeam === "B" ? battle.teamBColor : "transparent"
+              borderColor: teamBColor, 
+              color: selectedTeamId === battle.teamBId ? "#000" : teamBColor,
+              background: selectedTeamId === battle.teamBId ? teamBColor : "transparent"
             }}
           >
-            {battle.teamBName}
+            {battle.teamB.name}
           </button>
         </div>
 

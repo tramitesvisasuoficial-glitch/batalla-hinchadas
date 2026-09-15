@@ -8,16 +8,36 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Team {
+  id    String @id @default(uuid())
+  name  String @unique
+  logo  String?
+  color String?
+  
+  battlesAsTeamA Battle[] @relation("BattleTeamA")
+  battlesAsTeamB Battle[] @relation("BattleTeamB")
+  supports       Support[]
+}
+
 model Battle {
   id         String    @id @default(uuid())
   title      String
-  teamAName  String
-  teamAColor String
-  teamBName  String
-  teamBColor String
   status     String    @default("active") // active, ended
   createdAt  DateTime  @default(now())
   endsAt     DateTime?
+
+  // New Relational Fields (Nullable for safe migration, will be populated by migration script)
+  teamAId    String?
+  teamA      Team?     @relation("BattleTeamA", fields: [teamAId], references: [id])
+  
+  teamBId    String?
+  teamB      Team?     @relation("BattleTeamB", fields: [teamBId], references: [id])
+
+  // Deprecated fields (kept for migration, to be removed later)
+  teamAName  String?
+  teamAColor String?
+  teamBName  String?
+  teamBColor String?
   
   supports   Support[]
 }
@@ -25,7 +45,14 @@ model Battle {
 model Support {
   id            String   @id @default(uuid())
   battleId      String
-  team          String   // "A" or "B"
+  
+  // Deprecated field
+  legacyTeam    String?   @map("team") // "A" or "B"
+  
+  // New Relational Field
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+
   amount        Float
   currency      String   @default("USD")
   supporterName String

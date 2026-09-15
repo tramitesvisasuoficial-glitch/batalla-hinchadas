@@ -4,23 +4,29 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, teamAName, teamAColor, teamBName, teamBColor, endsAt } = body;
+    const { title, teamAId, teamBId, endsAt } = body;
 
     // Validation
-    if (!title || !teamAName || !teamAColor || !teamBName || !teamBColor) {
+    if (!title || !teamAId || !teamBId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Create in SQLite
+    if (teamAId === teamBId) {
+      return NextResponse.json({ error: "El Equipo A y el Equipo B no pueden ser el mismo" }, { status: 400 });
+    }
+
+    // Create in Database
     const battle = await prisma.battle.create({
       data: {
         title,
-        teamAName,
-        teamAColor,
-        teamBName,
-        teamBColor,
+        teamAId,
+        teamBId,
         endsAt: endsAt ? new Date(endsAt) : null,
       },
+      include: {
+        teamA: true,
+        teamB: true,
+      }
     });
 
     return NextResponse.json(battle, { status: 201 });
@@ -34,6 +40,13 @@ export async function GET() {
   try {
     const battles = await prisma.battle.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        teamA: true,
+        teamB: true,
+        _count: {
+          select: { supports: true }
+        }
+      }
     });
     return NextResponse.json(battles, { status: 200 });
   } catch (error) {

@@ -9,22 +9,26 @@ export default async function BattlePage({
   params: Promise<{ id: string }>,
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { id } = await params;
+  const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const isSuccess = resolvedSearchParams?.success === "true";
 
   const battle = await prisma.battle.findUnique({
-    where: { id },
-    include: { supports: true }
+    where: { id: resolvedParams.id },
+    include: { 
+      supports: true,
+      teamA: true,
+      teamB: true
+    }
   });
 
-  if (!battle) {
+  if (!battle || !battle.teamA || !battle.teamB) {
     notFound();
   }
 
-  // Calculate totals ONLY from confirmed payments
-  const teamATotal = battle.supports.filter(s => s.team === "A" && s.paymentStatus === "paid").reduce((acc, curr) => acc + curr.amount, 0);
-  const teamBTotal = battle.supports.filter(s => s.team === "B" && s.paymentStatus === "paid").reduce((acc, curr) => acc + curr.amount, 0);
+  // Calculate totals ONLY from confirmed payments using teamId
+  const teamATotal = battle.supports.filter(s => s.teamId === battle.teamAId && s.paymentStatus === "paid").reduce((acc, curr) => acc + curr.amount, 0);
+  const teamBTotal = battle.supports.filter(s => s.teamId === battle.teamBId && s.paymentStatus === "paid").reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
     <main className="container">
@@ -34,7 +38,7 @@ export default async function BattlePage({
         </div>
       )}
 
-      <h1 className="title">BATALLA: {battle.teamAName} VS {battle.teamBName}</h1>
+      <h1 className="title">BATALLA: {battle.teamA.name} VS {battle.teamB.name}</h1>
       
       <p style={{ textAlign: "center", marginBottom: "16px", color: "#e2e8f0" }}>
         Elige tu equipo y adquiere una participación digital para aparecer dentro de esta batalla.
@@ -45,7 +49,7 @@ export default async function BattlePage({
       </p>
 
       <SupportForm 
-        battle={battle} 
+        battle={battle as any} 
         initialTeamATotal={teamATotal} 
         initialTeamBTotal={teamBTotal} 
       />

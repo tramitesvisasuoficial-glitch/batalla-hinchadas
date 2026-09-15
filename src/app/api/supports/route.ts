@@ -4,18 +4,14 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { battleId, team, amount, currency, supporterName, message } = body;
+    const { battleId, teamId, amount, currency, supporterName, message } = body;
 
-    if (!battleId || !team || amount === undefined || !currency) {
+    if (!battleId || !teamId || amount === undefined || !currency) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
     }
 
     if (currency !== "USD") {
       return NextResponse.json({ error: "Moneda no soportada" }, { status: 400 });
-    }
-
-    if (team !== "A" && team !== "B") {
-      return NextResponse.json({ error: "Equipo inválido" }, { status: 400 });
     }
 
     if (typeof amount !== "number" || !Number.isFinite(amount)) {
@@ -38,11 +34,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "La batalla no existe" }, { status: 404 });
     }
 
+    if (battle.status === "ended") {
+      return NextResponse.json({ error: "La batalla ha finalizado" }, { status: 403 });
+    }
+
+    if (teamId !== battle.teamAId && teamId !== battle.teamBId) {
+      return NextResponse.json({ error: "El equipo seleccionado no pertenece a esta batalla" }, { status: 400 });
+    }
+
     // 1. Create support in database as "pending"
     const support = await prisma.support.create({
       data: {
         battleId,
-        team,
+        teamId,
         amount: parseFloat(amount.toString()),
         currency: "USD",
         supporterName: safeSupporterName,
