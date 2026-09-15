@@ -26,6 +26,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
+        <div style={{ background: "#f59e0b", color: "#000", textAlign: "center", padding: "8px", fontSize: "0.85rem", fontWeight: "bold" }}>
+          ENTORNO DE PRUEBA — Los pagos realizados aquí utilizan el modo Sandbox y no representan cobros reales.
+        </div>
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
           <div style={{ flex: 1 }}>
             {children}

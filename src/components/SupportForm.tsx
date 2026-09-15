@@ -62,7 +62,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           if (epayco) {
             const checkout = epayco.checkout.configure({
               key: process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY || "",
-              test: true
+              test: process.env.NEXT_PUBLIC_EPAYCO_TEST === "true"
             });
             checkout.open(data.checkoutData);
           } else {

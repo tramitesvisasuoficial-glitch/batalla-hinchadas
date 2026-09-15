@@ -27,12 +27,27 @@ export async function POST(request: Request) {
       x_id_invoice,
       x_response,
       x_transaction_state,
-      x_transaction_date
+      x_transaction_date,
+      x_test_request
     } = body;
 
     // 1. Validate variables exist
     if (!x_ref_payco || !x_signature || !x_id_invoice) {
       return NextResponse.json({ error: "Missing required ePayco parameters" }, { status: 400 });
+    }
+
+    // 1.5 Validate Test Environment Security
+    const isTestMode = process.env.EPAYCO_TEST_MODE === "true";
+    const isTestRequest = x_test_request === true || x_test_request === "TRUE" || x_test_request === "true";
+
+    if (isTestMode && !isTestRequest) {
+      console.error("Transacción de producción bloqueada en entorno Sandbox");
+      return NextResponse.json({ error: "Environment mismatch (Sandbox expected)" }, { status: 403 });
+    }
+    
+    if (!isTestMode && isTestRequest) {
+      console.error("Transacción Sandbox bloqueada en entorno de Producción");
+      return NextResponse.json({ error: "Environment mismatch (Production expected)" }, { status: 403 });
     }
 
     const p_cust_id_cliente = (process.env.EPAYCO_P_CUST_ID_CLIENTE || "").trim();

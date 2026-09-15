@@ -32,3 +32,10 @@ Cuando se desee activar pagos reales:
 1. Reemplazar las credenciales en Vercel (Variables de entorno) con las llaves de Producción de ePayco.
 2. Modificar el parámetro `test: "true"` a `test: "false"` en la configuración del Checkout frontend.
 3. Asegurarse de que ePayco haya aprobado la cuenta de producción.
+
+> [!WARNING]
+> **VERIFICACIÓN REQUERIDA PRE-PRODUCCIÓN**
+> Nuestra integración actual utiliza **Standard Checkout v1** (`checkout.js` + `key` + `test` + `open(data)`). Aunque el Sandbox E2E ha demostrado que este flujo funciona de punta a punta de forma correcta, la documentación más moderna de ePayco orienta las nuevas implementaciones hacia el **Smart Checkout v2** (`checkout-v2.js` + `sessionId`). 
+> Antes del primer cobro real en producción, es prudente confirmar directamente con soporte de ePayco que:
+> 1. El Standard Checkout actual sigue siendo completamente válido y seguro para operar nuestra cuenta en producción.
+> 2. La cuenta comercial específica tiene habilitados los cobros internacionales en **USD**.
