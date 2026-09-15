@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Battle {
+  id         String    @id @default(uuid())
+  title      String
+  teamAName  String
+  teamAColor String
+  teamBName  String
+  teamBColor String
+  status     String    @default("active") // active, ended
+  createdAt  DateTime  @default(now())
+  endsAt     DateTime?
+  
+  supports   Support[]
+}
+
+model Support {
+  id            String   @id @default(uuid())
+  battleId      String
+  team          String   // "A" or "B"
+  amount        Float
+  supporterName String
+  message       String?
+  paymentStatus String   @default("pending") // pending, confirmed
+  createdAt     DateTime @default(now())
+
+  battle        Battle   @relation(fields: [battleId], references: [id])
+}
