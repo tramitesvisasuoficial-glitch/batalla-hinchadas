@@ -53,6 +53,8 @@ export async function POST(request: Request) {
     }
 
     // 1. Create support in database as "pending"
+    // The expiresAt is automatically handled by the database schema (NOW() + 30 mins),
+    // but we'll fetch it to return.
     const support = await prisma.support.create({
       data: {
         battleId,
@@ -65,16 +67,33 @@ export async function POST(request: Request) {
       }
     });
 
-    // 2. Prepare architecture for future payment provider (ePayco)
-    // Here we will generate the checkout session with ePayco.
-    // Since ePayco is not integrated yet, we do NOT simulate it.
-    // The status remains 'pending' until the real webhook updates it to 'paid'.
-    const checkoutUrl = null; 
+    // 2. Prepare architecture for ePayco Sandbox
+    // The frontend will use the support.id as the invoice reference.
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
+      ? process.env.NEXT_PUBLIC_BASE_URL 
+      : process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}` 
+        : 'http://localhost:3000';
+
+    const checkoutData = {
+      invoice: support.id,
+      amount: support.amount,
+      name: `Participación en Batalla: ${battle.title}`,
+      description: `Apoyo al equipo en la batalla ${battle.title}`,
+      currency: "usd",
+      tax_base: "0",
+      tax: "0",
+      country: "co",
+      lang: "es",
+      external: "true", // Sandbox true to open external
+      confirmation: `${baseUrl}/api/webhook/epayco`,
+      response: `${baseUrl}/b/${battle.id}`
+    };
 
     // 3. Return response
     return NextResponse.json({ 
       support, 
-      checkout_url: checkoutUrl,
+      checkoutData,
       success: true
     }, { status: 201 });
 

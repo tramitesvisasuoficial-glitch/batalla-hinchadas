@@ -54,8 +54,20 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
 
       if (res.ok) {
         const data = await res.json();
-        if (data.checkout_url) {
-          window.location.href = data.checkout_url;
+        if (data.checkoutData) {
+          // Prevent React state from setting paid. Wait for webhook.
+          setSuccess(true);
+          
+          const epayco = (window as any).ePayco;
+          if (epayco) {
+            const checkout = epayco.checkout.configure({
+              key: process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY || "",
+              test: true
+            });
+            checkout.open(data.checkoutData);
+          } else {
+            alert("Error cargando la pasarela de pagos. Por favor intenta de nuevo.");
+          }
         } else {
           setSuccess(true);
         }

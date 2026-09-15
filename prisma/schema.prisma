@@ -58,8 +58,15 @@ model Support {
   currency      String   @default("USD")
   supporterName String
   message       String?
-  paymentStatus String   @default("pending") // pending, confirmed
+  paymentStatus String   @default("pending") // pending, paid
   createdAt     DateTime @default(now())
+  // ePayco Integration Fields
+  refPayco      String?  @unique // Reference returned by ePayco
+  transactionId String?  // Internal ePayco Transaction ID
+  paymentResponse String? // Text response (e.g., Aceptada, Rechazada)
+  paymentCode   Int?     // Numeric response code (1 = Aceptada, etc)
+  paymentDate   DateTime? // Date of payment confirmation from ePayco
+  expiresAt     DateTime @default(dbgenerated("NOW() + interval '30 minutes'")) // Validity of the payment order
 
   battle        Battle   @relation(fields: [battleId], references: [id])
 }
