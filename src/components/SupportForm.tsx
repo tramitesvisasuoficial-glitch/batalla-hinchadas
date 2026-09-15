@@ -84,7 +84,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
       </div>
 
       <div className="action-area">
-        <h2 className="section-title">ELIGE TU APOYO</h2>
+        <h2 className="section-title">ELIGE TU EQUIPO</h2>
         
         <div className="team-selector">
           <button 
@@ -124,13 +124,14 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         </div>
         
         <div className="form-group" style={{ marginBottom: "24px" }}>
-          <label>Monto Personalizado ($)</label>
+          <label>Valor de tu participación ($)</label>
           <input 
             type="number" 
             placeholder="Otro monto" 
             value={customAmount}
             onChange={(e) => setCustomAmount(e.target.value)}
             min="1"
+            max="1000"
             step="1"
           />
         </div>
@@ -141,6 +142,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             type="text" 
             placeholder="Ej: Hincha123" 
             value={supporterName}
+            maxLength={50}
             onChange={e => setSupporterName(e.target.value)}
           />
         </div>
@@ -158,21 +160,26 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
 
         {success && (
           <div style={{ background: "rgba(16, 185, 129, 0.2)", color: "#10b981", padding: "12px", borderRadius: "8px", margin: "16px 0", textAlign: "center", border: "1px solid #10b981" }}>
-            ¡Apoyo registrado en base de datos! (Estado: Pendiente)
+            Estamos esperando la confirmación del pago. El marcador se actualizará automáticamente cuando la transacción sea confirmada.
           </div>
         )}
+
+        <div style={{ textAlign: "center", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "16px", marginTop: "16px" }}>
+          La participación adquirida representa una experiencia digital en este ranking. <br/>
+          <strong>No es una apuesta.</strong> No otorga premios financieros ni retiros de dinero.
+        </div>
 
         <button 
           onClick={handleSubmit}
           className="submit-btn" 
           style={{ background: "#ffffff", color: "#000" }}
-          disabled={loading || currentAmount <= 0}
+          disabled={loading || currentAmount <= 0 || currentAmount > 1000}
         >
-          {loading ? "PROCESANDO..." : `APOYAR CON $${currentAmount}`}
+          {loading ? "PROCESANDO..." : `ADQUIRIR PARTICIPACIÓN ($${currentAmount})`}
         </button>
         
         <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#94a3b8", marginTop: "12px" }}>
-          *Esta es una versión de desarrollo. Se creará un registro pendiente en SQLite, no habrá cobro real.
+          *Serás redirigido de forma segura a Dodo Payments.
         </p>
       </div>
     </>

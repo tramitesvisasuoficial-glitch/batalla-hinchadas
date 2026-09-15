@@ -20,9 +20,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Equipo inválido" }, { status: 400 });
     }
 
-    if (amount <= 0) {
-      return NextResponse.json({ error: "El monto debe ser mayor a cero" }, { status: 400 });
+    if (amount <= 0 || amount > 1000) {
+      return NextResponse.json({ error: "El monto debe ser entre $1 y $1,000" }, { status: 400 });
     }
+
+    if (!Number.isFinite(amount)) {
+      return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
+    }
+
+    // Clean strings
+    const safeSupporterName = supporterName ? String(supporterName).trim().substring(0, 50) : "Hincha Anónimo";
+    const safeMessage = message ? String(message).trim().substring(0, 80) : null;
 
     const battle = await prisma.battle.findUnique({
       where: { id: battleId }
@@ -38,8 +46,8 @@ export async function POST(request: Request) {
         battleId,
         team,
         amount: parseFloat(amount),
-        supporterName: supporterName || "Hincha Anónimo",
-        message: message || null,
+        supporterName: safeSupporterName,
+        message: safeMessage,
         paymentStatus: "pending"
       }
     });

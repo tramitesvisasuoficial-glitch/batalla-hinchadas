@@ -1,165 +1,63 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 
-export default function CreatorDashboard() {
-  const [loading, setLoading] = useState(false);
-  const [battleId, setBattleId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    teamAName: "",
-    teamAColor: "#00d2ff",
-    teamBName: "",
-    teamBColor: "#ff0055",
-    endsAt: "",
+export default async function HomePage() {
+  const latestBattle = await prisma.battle.findFirst({
+    where: { status: "active" },
+    orderBy: { createdAt: "desc" }
   });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/battles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const battle = await response.json();
-        setBattleId(battle.id);
-      } else {
-        alert("Error al crear la batalla");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Error de red al conectar con la base de datos.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copyLink = () => {
-    const url = `${window.location.origin}/b/${battleId}`;
-    navigator.clipboard.writeText(url);
-    alert("¡Enlace copiado al portapapeles!");
-  };
-
-  if (battleId) {
-    return (
-      <main className="container">
-        <div className="action-area" style={{ textAlign: "center" }}>
-          <h1 className="title" style={{ fontSize: "2rem" }}>¡BATALLA CREADA!</h1>
-          <p style={{ marginBottom: "24px", color: "#94a3b8" }}>
-            Comparte este enlace público con tu audiencia para que empiecen a apoyar.
-          </p>
-          
-          <div style={{ background: "#0f1115", padding: "16px", borderRadius: "8px", marginBottom: "24px", border: "1px solid #2d3340", wordBreak: "break-all" }}>
-            {`${typeof window !== "undefined" ? window.location.origin : ""}/b/${battleId}`}
-          </div>
-
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
-            <button className="team-btn" onClick={copyLink} style={{ flex: "none", width: "auto" }}>
-              Copiar Enlace
-            </button>
-            <Link href={`/b/${battleId}`} style={{ textDecoration: "none" }}>
-              <button className="submit-btn" style={{ marginTop: 0, padding: "16px 24px" }}>
-                Ver Batalla
-              </button>
-            </Link>
-          </div>
-          
-          <button onClick={() => setBattleId(null)} style={{ marginTop: "32px", color: "#94a3b8", textDecoration: "underline" }}>
-            Crear otra batalla
-          </button>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="container">
-      <h1 className="title">⚽ CREADOR DE BATALLAS</h1>
-      <p className="subtitle">Crea una nueva batalla de hinchadas para tu transmisión.</p>
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <h1 className="title" style={{ fontSize: "2.5rem", marginBottom: "16px" }}>BATALLA DE HINCHADAS</h1>
+        
+        <h2 style={{ fontSize: "1.5rem", color: "#fff", marginBottom: "16px" }}>
+          ¿QUÉ HINCHADA DOMINA EL RANKING?
+        </h2>
+        
+        <p className="subtitle" style={{ fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto", color: "#e2e8f0" }}>
+          Participa en batallas digitales entre grandes equipos y haz visible tu posición dentro del marcador público.
+        </p>
+      </div>
 
-      <div className="action-area">
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Título de la Batalla</label>
-            <input 
-              type="text" 
-              required 
-              placeholder="Ej: El Clásico, Gran Final, etc."
-              value={formData.title}
-              onChange={e => setFormData({...formData, title: e.target.value})}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: "16px", marginTop: "16px" }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Hinchada A (Nombre)</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Ej: Madridistas"
-                value={formData.teamAName}
-                onChange={e => setFormData({...formData, teamAName: e.target.value})}
-              />
-            </div>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Hinchada A (Color Hex)</label>
-              <input 
-                type="color" 
-                required 
-                style={{ width: "100%", height: "48px", padding: "4px" }}
-                value={formData.teamAColor}
-                onChange={e => setFormData({...formData, teamAColor: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "16px", marginTop: "16px" }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Hinchada B (Nombre)</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Ej: Culés"
-                value={formData.teamBName}
-                onChange={e => setFormData({...formData, teamBName: e.target.value})}
-              />
-            </div>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Hinchada B (Color Hex)</label>
-              <input 
-                type="color" 
-                required 
-                style={{ width: "100%", height: "48px", padding: "4px" }}
-                value={formData.teamBColor}
-                onChange={e => setFormData({...formData, teamBColor: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginTop: "16px" }}>
-            <label>Fecha y Hora de Finalización (Opcional)</label>
-            <input 
-              type="datetime-local" 
-              value={formData.endsAt}
-              onChange={e => setFormData({...formData, endsAt: e.target.value})}
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            className="submit-btn" 
-            style={{ marginTop: "32px" }}
-            disabled={loading}
-          >
-            {loading ? "CREANDO EN BASE DE DATOS..." : "🔥 GENERAR ENLACES"}
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        {latestBattle ? (
+          <Link href={`/b/${latestBattle.id}`} style={{ textDecoration: "none" }}>
+            <button className="submit-btn" style={{ fontSize: "1.1rem", padding: "16px 32px" }}>
+              🔥 VER BATALLAS ACTIVAS
+            </button>
+          </Link>
+        ) : (
+          <button className="submit-btn" style={{ fontSize: "1.1rem", padding: "16px 32px", opacity: 0.5, cursor: "not-allowed" }} disabled>
+            NO HAY BATALLAS ACTIVAS
           </button>
-        </form>
+        )}
+      </div>
+
+      <div className="action-area" style={{ marginBottom: "40px" }}>
+        <p style={{ marginBottom: "24px", lineHeight: "1.6" }}>
+          Cada batalla enfrenta dos equipos. Los aficionados pueden adquirir una participación digital y registrar su posición por el equipo elegido. Las participaciones confirmadas actualizan el marcador público.
+        </p>
+
+        <h3 className="section-title">¿CÓMO FUNCIONA?</h3>
+        <ol style={{ paddingLeft: "20px", marginBottom: "24px", lineHeight: "1.8" }}>
+          <li><strong>Elige una batalla</strong></li>
+          <li><strong>Selecciona tu equipo</strong></li>
+          <li><strong>Adquiere una participación</strong></li>
+          <li><strong>Tu participación aparece en el ranking</strong></li>
+          <li><strong>Consulta el marcador en tiempo real</strong></li>
+        </ol>
+
+        <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "16px", borderRadius: "8px", marginBottom: "16px" }}>
+          <h3 style={{ color: "#ef4444", marginBottom: "12px", fontSize: "1rem" }}>IMPORTANTE</h3>
+          <p style={{ fontSize: "0.9rem", color: "#f87171", margin: 0, lineHeight: "1.6" }}>
+            Batalla de Hinchadas es una plataforma independiente de entretenimiento digital. Las participaciones adquiridas representan una experiencia y posición dentro de nuestros rankings digitales.<br/><br/>
+            No ofrecemos apuestas, cuotas, juegos de azar, premios monetarios, ganancias, retiros ni recompensas económicas.<br/><br/>
+            El resultado de un partido o competición deportiva real no determina ningún pago, premio o beneficio económico dentro de la plataforma.<br/><br/>
+            Batalla de Hinchadas no recauda fondos para clubes, jugadores, ligas o terceros y no está afiliada oficialmente con ellos.
+          </p>
+        </div>
       </div>
     </main>
   );
