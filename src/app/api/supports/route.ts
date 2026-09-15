@@ -34,8 +34,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "La batalla no existe" }, { status: 404 });
     }
 
-    if (battle.status === "ended") {
-      return NextResponse.json({ error: "La batalla ha finalizado" }, { status: 403 });
+    const now = new Date();
+    
+    if (battle.status !== "active") {
+      return NextResponse.json({ error: "La batalla no está activa" }, { status: 403 });
+    }
+
+    if (now < battle.startsAt) {
+      return NextResponse.json({ error: "La batalla aún no ha comenzado" }, { status: 403 });
+    }
+
+    if (battle.endsAt && now >= battle.endsAt) {
+      return NextResponse.json({ error: "La batalla ha finalizado por límite de tiempo" }, { status: 403 });
     }
 
     if (teamId !== battle.teamAId && teamId !== battle.teamBId) {

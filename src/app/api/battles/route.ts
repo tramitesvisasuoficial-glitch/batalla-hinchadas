@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, teamAId, teamBId, endsAt } = body;
+    const { title, teamAId, teamBId, startsAt, endsAt, status } = body;
 
     // Validation
     if (!title || !teamAId || !teamBId) {
@@ -14,6 +14,13 @@ export async function POST(request: Request) {
     if (teamAId === teamBId) {
       return NextResponse.json({ error: "El Equipo A y el Equipo B no pueden ser el mismo" }, { status: 400 });
     }
+    
+    let parsedStartsAt = startsAt ? new Date(startsAt) : new Date();
+    let parsedEndsAt = endsAt ? new Date(endsAt) : null;
+
+    if (parsedEndsAt && parsedEndsAt <= parsedStartsAt) {
+      return NextResponse.json({ error: "La fecha de finalización debe ser mayor a la fecha de inicio" }, { status: 400 });
+    }
 
     // Create in Database
     const battle = await prisma.battle.create({
@@ -21,7 +28,9 @@ export async function POST(request: Request) {
         title,
         teamAId,
         teamBId,
-        endsAt: endsAt ? new Date(endsAt) : null,
+        startsAt: parsedStartsAt,
+        endsAt: parsedEndsAt,
+        status: status || "draft",
       },
       include: {
         teamA: true,

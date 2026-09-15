@@ -44,9 +44,6 @@ export default async function BattlePage({
         Elige tu equipo y adquiere una participación digital para aparecer dentro de esta batalla.
       </p>
 
-      <p className="subtitle" style={{ fontSize: "0.9rem" }}>
-        {battle.endsAt ? `Finaliza el: ${new Date(battle.endsAt).toLocaleString()}` : "Batalla sin límite de tiempo definido."}
-      </p>
 
       <SupportForm 
         battle={battle as any} 

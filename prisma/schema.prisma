@@ -22,8 +22,9 @@ model Team {
 model Battle {
   id         String    @id @default(uuid())
   title      String
-  status     String    @default("active") // active, ended
+  status     String    @default("draft") // draft, active, ended
   createdAt  DateTime  @default(now())
+  startsAt   DateTime  @default(now())
   endsAt     DateTime?
 
   // New Relational Fields (Nullable for safe migration, will be populated by migration script)

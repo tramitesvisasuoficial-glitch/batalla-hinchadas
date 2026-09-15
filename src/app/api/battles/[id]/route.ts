@@ -5,7 +5,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, teamAId, teamBId, endsAt, status } = body;
+    const { title, teamAId, teamBId, startsAt, endsAt, status } = body;
 
     const battle = await prisma.battle.findUnique({
       where: { id },
@@ -22,8 +22,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const updates: any = {};
     if (title) updates.title = title;
-    if (endsAt !== undefined) updates.endsAt = endsAt ? new Date(endsAt) : null;
+    
+    if (startsAt !== undefined) {
+      updates.startsAt = startsAt ? new Date(startsAt) : new Date();
+    }
+    if (endsAt !== undefined) {
+      updates.endsAt = endsAt ? new Date(endsAt) : null;
+    }
     if (status) updates.status = status;
+    
+    const newStartsAt = updates.startsAt || battle.startsAt;
+    const newEndsAt = updates.endsAt !== undefined ? updates.endsAt : battle.endsAt;
+
+    if (newEndsAt && newEndsAt <= newStartsAt) {
+      return NextResponse.json({ error: "La fecha de finalización debe ser mayor a la fecha de inicio" }, { status: 400 });
+    }
 
     // Check if team changes are requested
     const teamsChanged = (teamAId && teamAId !== battle.teamAId) || (teamBId && teamBId !== battle.teamBId);
