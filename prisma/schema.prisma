@@ -27,6 +27,7 @@ model Support {
   battleId      String
   team          String   // "A" or "B"
   amount        Float
+  currency      String   @default("USD")
   supporterName String
   message       String?
   paymentStatus String   @default("pending") // pending, confirmed

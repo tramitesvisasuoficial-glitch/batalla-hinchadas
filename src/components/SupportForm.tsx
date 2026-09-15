@@ -38,6 +38,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           battleId: battle.id,
           team: selectedTeam,
           amount: currentAmount,
+          currency: "USD",
           supporterName,
           message
         })
@@ -67,12 +68,12 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
       <div className="battle-header">
         <div className="team-score team-a">
           <div className="team-name" style={{ color: battle.teamAColor }}>{battle.teamAName}</div>
-          <div className="score">${initialTeamATotal.toFixed(2)}</div>
+          <div className="score">US${initialTeamATotal.toFixed(2)}</div>
         </div>
         <div className="vs">VS</div>
         <div className="team-score team-b">
           <div className="team-name" style={{ color: battle.teamBColor }}>{battle.teamBName}</div>
-          <div className="score">${initialTeamBTotal.toFixed(2)}</div>
+          <div className="score">US${initialTeamBTotal.toFixed(2)}</div>
         </div>
       </div>
 
@@ -112,19 +113,19 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         </div>
 
         <div className="amounts">
-          {[2, 5, 10].map(val => (
+          {[1, 2, 5, 10].map(val => (
             <button 
               key={val}
               onClick={() => { setAmount(val); setCustomAmount(""); }}
               className={`amount-btn ${amount === val && !customAmount ? "active" : ""}`}
             >
-              ${val}
+              US${val}
             </button>
           ))}
         </div>
         
         <div className="form-group" style={{ marginBottom: "24px" }}>
-          <label>Valor de tu participación ($)</label>
+          <label>Valor de tu participación (US$)</label>
           <input 
             type="number" 
             placeholder="Otro monto" 
@@ -175,11 +176,11 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           style={{ background: "#ffffff", color: "#000" }}
           disabled={loading || currentAmount <= 0 || currentAmount > 1000}
         >
-          {loading ? "PROCESANDO..." : `ADQUIRIR PARTICIPACIÓN ($${currentAmount})`}
+          {loading ? "PROCESANDO..." : `ADQUIRIR PARTICIPACIÓN (US$${currentAmount})`}
         </button>
         
         <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#94a3b8", marginTop: "12px" }}>
-          *Serás redirigido de forma segura a Dodo Payments.
+          *Pago procesado mediante una pasarela de pago segura.
         </p>
       </div>
     </>
