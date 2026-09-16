@@ -1,64 +1,258 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import BattlePitch from "@/components/BattlePitch";
+
+export const revalidate = 0; // Ensure data is dynamic for the homepage
 
 export default async function HomePage() {
-  const latestBattle = await prisma.battle.findFirst({
+  // 1. Fetch active battles
+  const activeBattles = await prisma.battle.findMany({
     where: { status: "active" },
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
+    include: {
+      teamA: true,
+      teamB: true,
+      supports: {
+        where: { paymentStatus: "paid" },
+      }
+    }
+  });
+
+  // Calculate totals for active battles
+  const battlesWithTotals = activeBattles.map(battle => {
+    const totalA = battle.supports
+      .filter(s => s.teamId === battle.teamAId)
+      .reduce((sum, s) => sum + s.amount, 0);
+    const totalB = battle.supports
+      .filter(s => s.teamId === battle.teamBId)
+      .reduce((sum, s) => sum + s.amount, 0);
+    return { ...battle, totalA, totalB };
+  });
+
+  // 2. Fetch latest activity (Global)
+  const latestActivity = await prisma.support.findMany({
+    where: { paymentStatus: "paid" },
+    orderBy: { createdAt: "desc" },
+    take: 4,
+    include: { team: true }
+  });
+
+  // 3. Fetch global ranking (Top amounts overall)
+  // NOTE: Not grouped by user, per user's requirement to not invent identity
+  const topSupports = await prisma.support.findMany({
+    where: { paymentStatus: "paid" },
+    orderBy: { amount: "desc" },
+    take: 3,
+    include: { team: true }
   });
 
   return (
-    <main className="container">
-      <div style={{ textAlign: "center", marginBottom: "40px" }}>
-        <h1 className="title" style={{ fontSize: "2.5rem", marginBottom: "16px" }}>BATALLA DE HINCHADAS</h1>
-        
-        <h2 style={{ fontSize: "1.5rem", color: "#fff", marginBottom: "16px" }}>
-          ¿QUÉ HINCHADA DOMINA EL RANKING?
-        </h2>
-        
-        <p className="subtitle" style={{ fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto", color: "#e2e8f0" }}>
-          Participa en batallas digitales entre grandes equipos y haz visible tu posición dentro del marcador público.
+    <main style={{ padding: 0 }}>
+      {/* 1. HERO PRINCIPAL */}
+      <section className="hero-section">
+        <h1 className="hero-title">NO MIRES LA BATALLA.<br/>FORMA PARTE DE ELLA.</h1>
+        <p className="hero-subtitle">
+          Elige tu equipo, adquiere tu participación y sube posiciones dentro del marcador público.
         </p>
-      </div>
-
-      <div style={{ textAlign: "center", marginBottom: "40px" }}>
-        {latestBattle ? (
-          <Link href={`/b/${latestBattle.id}`} style={{ textDecoration: "none" }}>
-            <button className="submit-btn" style={{ fontSize: "1.1rem", padding: "16px 32px" }}>
-              🔥 VER BATALLAS ACTIVAS
+        <div className="hero-ctas">
+          {battlesWithTotals.length > 0 ? (
+            <Link href={`/b/${battlesWithTotals[0].id}`} className="btn-primary">
+              ⚔️ ENTRAR A UNA BATALLA
+            </Link>
+          ) : (
+            <button className="btn-primary" disabled style={{ opacity: 0.5 }}>
+              ⚔️ ENTRAR A UNA BATALLA
             </button>
-          </Link>
-        ) : (
-          <button className="submit-btn" style={{ fontSize: "1.1rem", padding: "16px 32px", opacity: 0.5, cursor: "not-allowed" }} disabled>
-            NO HAY BATALLAS ACTIVAS
-          </button>
-        )}
-      </div>
-
-      <div className="action-area" style={{ marginBottom: "40px" }}>
-        <p style={{ marginBottom: "24px", lineHeight: "1.6" }}>
-          Cada batalla enfrenta dos equipos. Los aficionados pueden adquirir una participación digital y registrar su posición por el equipo elegido. Las participaciones confirmadas actualizan el marcador público.
-        </p>
-
-        <h3 className="section-title">¿CÓMO FUNCIONA?</h3>
-        <ol style={{ paddingLeft: "20px", marginBottom: "24px", lineHeight: "1.8" }}>
-          <li><strong>Elige una batalla</strong></li>
-          <li><strong>Selecciona tu equipo</strong></li>
-          <li><strong>Adquiere una participación</strong></li>
-          <li><strong>Tu participación aparece en el ranking</strong></li>
-          <li><strong>Consulta el marcador en tiempo real</strong></li>
-        </ol>
-
-        <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "16px", borderRadius: "8px", marginBottom: "16px" }}>
-          <h3 style={{ color: "#ef4444", marginBottom: "12px", fontSize: "1rem" }}>IMPORTANTE</h3>
-          <p style={{ fontSize: "0.9rem", color: "#f87171", margin: 0, lineHeight: "1.6" }}>
-            Batalla de Hinchadas es una plataforma independiente de entretenimiento digital. Las participaciones adquiridas representan una experiencia y posición dentro de nuestros rankings digitales.<br/><br/>
-            No ofrecemos apuestas, cuotas, juegos de azar, premios monetarios, ganancias, retiros ni recompensas económicas.<br/><br/>
-            El resultado de un partido o competición deportiva real no determina ningún pago, premio o beneficio económico dentro de la plataforma.<br/><br/>
-            Batalla de Hinchadas no recauda fondos para clubes, jugadores, ligas o terceros y no está afiliada oficialmente con ellos.
-          </p>
+          )}
+          <a href="#batallas" className="btn-secondary">VER BATALLAS</a>
         </div>
-      </div>
+      </section>
+
+      {/* 2. BATALLAS EN MARCHA */}
+      <section id="batallas" className="home-section" style={{ background: "rgba(255,255,255,0.01)" }}>
+        <div className="container">
+          <h2 className="home-section-title">🔥 BATALLAS EN MARCHA</h2>
+          
+          {battlesWithTotals.length === 0 ? (
+            <div className="empty-state">
+              <h2>No hay batallas activas</h2>
+              <p>Las próximas batallas se anunciarán pronto. ¡Prepárate!</p>
+            </div>
+          ) : (
+            <div>
+              {battlesWithTotals.map((battle) => (
+                <Link href={`/b/${battle.id}`} key={battle.id} className="battle-card">
+                  <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                    <h3 style={{ fontSize: "1.5rem", color: "#fff", textTransform: "uppercase" }}>{battle.title}</h3>
+                    <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginTop: "4px" }}>Entra y apoya a tu equipo</p>
+                  </div>
+                  
+                  {battle.teamA && battle.teamB && (
+                    <BattlePitch 
+                      teamA={battle.teamA}
+                      teamB={battle.teamB}
+                      totalA={battle.totalA}
+                      totalB={battle.totalB}
+                      compact={true}
+                    />
+                  )}
+                  
+                  <div style={{ textAlign: "center", marginTop: "24px" }}>
+                    <span style={{ color: "#fff", fontWeight: "800", textDecoration: "underline", textUnderlineOffset: "4px" }}>ENTRAR EN LA BATALLA →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 3. CÓMO FUNCIONA */}
+      <section className="home-section">
+        <div className="container">
+          <h2 className="home-section-title">¿CÓMO FUNCIONA?</h2>
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-icon">⚔️</div>
+              <h3 className="step-title">01 — ELIGE BATALLA</h3>
+              <p className="step-desc">Encuentra el enfrentamiento que quieres apoyar.</p>
+            </div>
+            <div className="step-card">
+              <div className="step-icon">🛡️</div>
+              <h3 className="step-title">02 — ELIGE EQUIPO</h3>
+              <p className="step-desc">Ponte de un lado de la batalla.</p>
+            </div>
+            <div className="step-card">
+              <div className="step-icon">🪙</div>
+              <h3 className="step-title">03 — PARTICIPA</h3>
+              <p className="step-desc">Elige el valor de tu participación.</p>
+            </div>
+            <div className="step-card">
+              <div className="step-icon">👑</div>
+              <h3 className="step-title">04 — SUBE POSICIÓN</h3>
+              <p className="step-desc">Aparece entre los seguidores destacados.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SISTEMA DE ESTATUS */}
+      <section className="home-section" style={{ background: "rgba(255,255,255,0.01)" }}>
+        <div className="container">
+          <h2 className="home-section-title">TU PARTICIPACIÓN DETERMINA TU POSICIÓN</h2>
+          <p style={{ textAlign: "center", color: "#94a3b8", marginBottom: "40px", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 40px" }}>
+            Cuanto mayor sea tu participación, más arriba puedes aparecer dentro del marcador de tu equipo. Consigue el mayor reconocimiento.
+          </p>
+          
+          <div className="status-grid">
+            <div className="status-card" style={{ borderColor: "#cd7f32" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥉</div>
+              <h3 style={{ color: "#cd7f32", fontWeight: "900" }}>BRONCE</h3>
+              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>El comienzo de la gloria.</p>
+            </div>
+            <div className="status-card" style={{ borderColor: "#c0c0c0" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥈</div>
+              <h3 style={{ color: "#c0c0c0", fontWeight: "900" }}>PLATA</h3>
+              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Avanzando posiciones.</p>
+            </div>
+            <div className="status-card" style={{ borderColor: "#ffd700" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥇</div>
+              <h3 style={{ color: "#ffd700", fontWeight: "900" }}>ORO</h3>
+              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Entre los mejores.</p>
+            </div>
+            <div className="status-card" style={{ borderColor: "#fff", background: "rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>👑</div>
+              <h3 style={{ color: "#fff", fontWeight: "900" }}>REY DE LA BATALLA</h3>
+              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Liderando a tu equipo.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. ACTIVIDAD DE LA BATALLA */}
+      <section className="home-section">
+        <div className="container">
+          <h2 className="home-section-title">⚡ LA BATALLA SE ESTÁ MOVIENDO</h2>
+          
+          <div className="activity-feed">
+            {latestActivity.length === 0 ? (
+              <div className="empty-state">
+                <p>Las hinchadas apenas se están preparando...</p>
+              </div>
+            ) : (
+              <div style={{ background: "var(--card-bg)", borderRadius: "16px", border: "1px solid var(--border)", padding: "16px" }}>
+                {latestActivity.map((activity, index) => (
+                  <div key={activity.id} className="activity-item">
+                    <div style={{ fontSize: "2rem" }}>🔥</div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontWeight: "700" }}>{activity.supporterName} apoyó con US${activity.amount.toFixed(2)}</p>
+                      <p className="latest-team" style={{ color: activity.team?.color || "#94a3b8" }}>
+                        {activity.team?.name || "Equipo Desconocido"}
+                      </p>
+                    </div>
+                    <div className="activity-time">
+                      Hace {Math.floor((new Date().getTime() - new Date(activity.createdAt).getTime()) / 60000)} min
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. RANKING GLOBAL */}
+      <section className="home-section" style={{ background: "rgba(255,255,255,0.01)" }}>
+        <div className="container">
+          <h2 className="home-section-title">👑 LOS REYES DE LA BATALLA</h2>
+          
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            {topSupports.length === 0 ? (
+              <div className="empty-state">
+                <p>Aún no hay Reyes. ¡El trono te espera!</p>
+              </div>
+            ) : (
+              <div className="ranking-list">
+                {topSupports.map((support, index) => (
+                  <div key={support.id} className="ranking-card" style={{ borderColor: support.team?.color || "var(--border)", borderLeft: `4px solid ${support.team?.color || "var(--border)"}` }}>
+                    <div className="ranking-pos">#{index + 1}</div>
+                    <div className="ranking-avatar" style={{ background: support.team?.color || "#333", color: "#000" }}>
+                      {support.supporterName.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="ranking-info">
+                      <div className="ranking-name">{support.supporterName}</div>
+                      <div className="ranking-badge" style={{ color: support.team?.color || "#fff" }}>
+                        {support.team?.name || "Hinchada"}
+                      </div>
+                    </div>
+                    <div className="ranking-amount" style={{ color: support.team?.color || "#fff" }}>
+                      US${support.amount.toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. CTA FINAL */}
+      <section className="home-section" style={{ paddingBottom: "100px", textAlign: "center" }}>
+        <div className="container">
+          <h2 style={{ fontSize: "3rem", fontWeight: "900", marginBottom: "16px", textTransform: "uppercase" }}>¿DE QUÉ LADO ESTÁS?</h2>
+          <p style={{ color: "#94a3b8", fontSize: "1.2rem", marginBottom: "40px" }}>Elige tu equipo y entra en la batalla.</p>
+          
+          {battlesWithTotals.length > 0 ? (
+            <Link href={`/b/${battlesWithTotals[0].id}`} className="btn-primary" style={{ padding: "20px 48px", fontSize: "1.25rem" }}>
+              ⚔️ ENTRAR A UNA BATALLA
+            </Link>
+          ) : (
+            <button className="btn-primary" disabled style={{ opacity: 0.5, padding: "20px 48px", fontSize: "1.25rem" }}>
+              NO HAY BATALLAS ACTIVAS
+            </button>
+          )}
+        </div>
+      </section>
     </main>
   );
 }

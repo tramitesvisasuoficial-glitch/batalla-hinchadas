@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Battle, Support } from "@prisma/client";
 import Countdown from "./Countdown";
+import BattlePitch from "./BattlePitch";
 
 type Team = { id: string; name: string; color: string | null; logo: string | null };
 
@@ -80,8 +81,8 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
       if (res.ok) {
         const data = await res.json();
         
-        if (data.supportId) {
-          setPendingSupportId(data.supportId);
+        if (data.support && data.support.id) {
+          setPendingSupportId(data.support.id);
         }
 
         if (data.checkoutData) {
@@ -171,24 +172,12 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         onStatusChange={setTimeStatus} 
       />
 
-      <div className="battle-header">
-        <div className="team-score team-a">
-          <div className="team-name" style={{ color: teamAColor }}>{battle.teamA.name}</div>
-          <div className="score">US${initialTeamATotal.toFixed(2)}</div>
-        </div>
-        <div className="vs">VS</div>
-        <div className="team-score team-b">
-          <div className="team-name" style={{ color: teamBColor }}>{battle.teamB.name}</div>
-          <div className="score">US${initialTeamBTotal.toFixed(2)}</div>
-        </div>
-      </div>
-
-      <div className="progress-container" style={{ background: teamBColor }}>
-        <div 
-          className="progress-a" 
-          style={{ width: `${progressA}%`, background: teamAColor }}
-        ></div>
-      </div>
+      <BattlePitch 
+        teamA={battle.teamA} 
+        teamB={battle.teamB} 
+        totalA={initialTeamATotal} 
+        totalB={initialTeamBTotal} 
+      />
 
       {isPlayable && !pendingSupportId && (
         <div className="action-area">
