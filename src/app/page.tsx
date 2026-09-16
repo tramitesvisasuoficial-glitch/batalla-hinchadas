@@ -136,39 +136,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. SISTEMA DE ESTATUS */}
-      <section className="home-section" style={{ background: "rgba(255,255,255,0.01)" }}>
-        <div className="container">
-          <h2 className="home-section-title">TU PARTICIPACIÓN DETERMINA TU POSICIÓN</h2>
-          <p style={{ textAlign: "center", color: "#94a3b8", marginBottom: "40px", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 40px" }}>
-            Cuanto mayor sea tu participación, más arriba puedes aparecer dentro del marcador de tu equipo. Consigue el mayor reconocimiento.
-          </p>
-          
-          <div className="status-grid">
-            <div className="status-card" style={{ borderColor: "#cd7f32" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥉</div>
-              <h3 style={{ color: "#cd7f32", fontWeight: "900" }}>BRONCE</h3>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>El comienzo de la gloria.</p>
-            </div>
-            <div className="status-card" style={{ borderColor: "#c0c0c0" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥈</div>
-              <h3 style={{ color: "#c0c0c0", fontWeight: "900" }}>PLATA</h3>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Avanzando posiciones.</p>
-            </div>
-            <div className="status-card" style={{ borderColor: "#ffd700" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🥇</div>
-              <h3 style={{ color: "#ffd700", fontWeight: "900" }}>ORO</h3>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Entre los mejores.</p>
-            </div>
-            <div className="status-card" style={{ borderColor: "#fff", background: "rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>👑</div>
-              <h3 style={{ color: "#fff", fontWeight: "900" }}>REY DE LA BATALLA</h3>
-              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginTop: "8px" }}>Liderando a tu equipo.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 5. ACTIVIDAD DE LA BATALLA */}
       <section className="home-section">
         <div className="container">

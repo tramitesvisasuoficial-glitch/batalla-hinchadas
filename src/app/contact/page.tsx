@@ -16,7 +16,7 @@ export default function ContactPage() {
           
           {/* Temporary configuration for email before official launch */}
           <div style={{ background: "#0f1115", padding: "16px", borderRadius: "8px", border: "1px solid #2d3340", margin: "24px 0", fontSize: "1.1rem", textAlign: "center" }}>
-            <strong>{process.env.NEXT_PUBLIC_CONTACT_EMAIL || "correo@pendiente-configuracion.com"}</strong>
+            <strong>{process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@batalladehinchadas.com"}</strong>
           </div>
 
           <p style={{ marginBottom: "16px" }}>
