@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Battle, Support } from "@prisma/client";
 import Countdown from "./Countdown";
 
 type Team = { id: string; name: string; color: string | null; logo: string | null };
 
 interface SupportFormProps {
-  battle: Battle & { supports: Support[], teamA: Team, teamB: Team };
+  battle: Battle & { teamA: Team, teamB: Team };
   initialTeamATotal: number;
   initialTeamBTotal: number;
 }
@@ -19,15 +19,39 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const [supporterName, setSupporterName] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [timeStatus, setTimeStatus] = useState<"before" | "active" | "ended">("active");
+
+  const [pendingSupportId, setPendingSupportId] = useState<string | null>(null);
+  const [confirmedData, setConfirmedData] = useState<any>(null);
 
   const total = initialTeamATotal + initialTeamBTotal;
   const progressA = total === 0 ? 50 : (initialTeamATotal / total) * 100;
 
   const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
-
   const isPlayable = battle.status === "active" && timeStatus === "active";
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (pendingSupportId && !confirmedData) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/supports/${pendingSupportId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.paymentStatus === "paid") {
+              setConfirmedData(data);
+              setPendingSupportId(null);
+            }
+          }
+        } catch (e) {
+          console.error("Polling error", e);
+        }
+      }, 3000);
+    }
+    
+    return () => clearInterval(interval);
+  }, [pendingSupportId, confirmedData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +60,8 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
     if (!selectedTeamId) return alert("Selecciona un equipo");
     
     setLoading(true);
-    setSuccess(false);
+    setConfirmedData(null);
+    setPendingSupportId(null);
 
     try {
       const res = await fetch("/api/supports", {
@@ -47,17 +72,19 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           teamId: selectedTeamId,
           amount: currentAmount,
           currency: "USD",
-          supporterName,
+          supporterName: supporterName || "Hincha Anónimo",
           message
         })
       });
 
       if (res.ok) {
         const data = await res.json();
+        
+        if (data.supportId) {
+          setPendingSupportId(data.supportId);
+        }
+
         if (data.checkoutData) {
-          // Prevent React state from setting paid. Wait for webhook.
-          setSuccess(true);
-          
           const epayco = (window as any).ePayco;
           if (epayco) {
             const checkout = epayco.checkout.configure({
@@ -68,8 +95,6 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           } else {
             alert("Error cargando la pasarela de pagos. Por favor intenta de nuevo.");
           }
-        } else {
-          setSuccess(true);
         }
       } else {
         const error = await res.json();
@@ -83,8 +108,60 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
     }
   };
 
+  const handleShare = async () => {
+    if (!confirmedData) return;
+    
+    const text = `🔥 Ya estoy en la Batalla de Hinchadas.\n\nEstoy apoyando al ${confirmedData.teamName} ⚪\n\nEstoy en la posición #${confirmedData.position}.\n\n¿De qué lado estás?\n\n${window.location.href}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Batalla de Hinchadas",
+          text: text,
+        });
+      } catch (err) {
+        console.error("Share failed", err);
+      }
+    } else {
+      navigator.clipboard.writeText(text);
+      alert("¡Texto copiado al portapapeles!");
+    }
+  };
+
   const teamAColor = battle.teamA.color || "#00d2ff";
   const teamBColor = battle.teamB.color || "#ff0055";
+
+  if (confirmedData) {
+    return (
+      <div className="share-card-container">
+        <h2 className="success-title">🔥 ¡YA ESTÁS EN LA BATALLA!</h2>
+        <div className="share-card" style={{ borderColor: confirmedData.teamColor || '#fff' }}>
+          <div className="sc-header" style={{ backgroundColor: confirmedData.teamColor || '#333' }}>
+            <div className="sc-avatar">{confirmedData.supporterName.substring(0,2).toUpperCase()}</div>
+            <h3>{confirmedData.supporterName}</h3>
+            <p>{confirmedData.teamName}</p>
+          </div>
+          <div className="sc-body">
+            <div className="sc-stat">
+              <span>Posición:</span>
+              <strong>#{confirmedData.position}</strong>
+            </div>
+            <div className="sc-stat">
+              <span>Participación:</span>
+              <strong>US${confirmedData.amount.toFixed(2)}</strong>
+            </div>
+            <div className="sc-stat">
+              <span>Insignia:</span>
+              <strong>{confirmedData.badgeEmoji} {confirmedData.badge}</strong>
+            </div>
+          </div>
+        </div>
+        <button onClick={handleShare} className="submit-btn share-btn" style={{ background: confirmedData.teamColor || '#fff', color: '#000' }}>
+          COMPARTIR MI PARTICIPACIÓN
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -113,9 +190,9 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         ></div>
       </div>
 
-      {isPlayable && (
+      {isPlayable && !pendingSupportId && (
         <div className="action-area">
-          <h2 className="section-title">ELIGE TU EQUIPO</h2>
+          <h2 className="section-title">APOYA A TU EQUIPO</h2>
           
           <div className="team-selector">
             <button 
@@ -189,29 +266,23 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             />
           </div>
 
-          {success && (
-            <div style={{ background: "rgba(16, 185, 129, 0.2)", color: "#10b981", padding: "12px", borderRadius: "8px", margin: "16px 0", textAlign: "center", border: "1px solid #10b981" }}>
-              Estamos esperando la confirmación del pago. El marcador se actualizará automáticamente cuando la transacción sea confirmada.
-            </div>
-          )}
-
-          <div style={{ textAlign: "center", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "16px", marginTop: "16px" }}>
-            La participación adquirida representa una experiencia digital en este ranking. <br/>
-            <strong>No es una apuesta.</strong> No otorga premios financieros ni retiros de dinero.
-          </div>
-
           <button 
             onClick={handleSubmit}
             className="submit-btn" 
             style={{ background: "#ffffff", color: "#000" }}
             disabled={loading || currentAmount <= 0 || currentAmount > 1000}
           >
-            {loading ? "PROCESANDO..." : `ADQUIRIR PARTICIPACIÓN (US$${currentAmount})`}
+            {loading ? "PROCESANDO..." : `ENTRA EN LA HINCHADA (US$${currentAmount})`}
           </button>
           
-          <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#94a3b8", marginTop: "12px" }}>
-            *Pago procesado mediante una pasarela de pago segura.
-          </p>
+        </div>
+      )}
+
+      {pendingSupportId && !confirmedData && (
+        <div className="confirming-state" style={{ padding: "40px 20px", textAlign: "center", background: "#1e293b", borderRadius: "12px", marginTop: "24px", border: "1px solid #334155" }}>
+          <h3 style={{ color: "#e2e8f0", marginBottom: "16px" }}>⏳ Estamos confirmando tu participación...</h3>
+          <p style={{ color: "#94a3b8", fontSize: "0.9rem" }}>No cierres esta ventana. El ranking se actualizará automáticamente en cuanto recibamos la confirmación del pago.</p>
+          <div className="spinner" style={{ margin: "20px auto", width: "40px", height: "40px", border: "4px solid rgba(255,255,255,0.1)", borderLeftColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
         </div>
       )}
     </>

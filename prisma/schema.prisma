@@ -9,64 +9,64 @@ datasource db {
 }
 
 model Team {
-  id    String @id @default(uuid())
-  name  String @unique
+  id    String  @id @default(uuid())
+  name  String  @unique
   logo  String?
   color String?
-  
-  battlesAsTeamA Battle[] @relation("BattleTeamA")
-  battlesAsTeamB Battle[] @relation("BattleTeamB")
+
+  battlesAsTeamA Battle[]  @relation("BattleTeamA")
+  battlesAsTeamB Battle[]  @relation("BattleTeamB")
   supports       Support[]
 }
 
 model Battle {
-  id         String    @id @default(uuid())
-  title      String
-  status     String    @default("draft") // draft, active, ended
-  createdAt  DateTime  @default(now())
-  startsAt   DateTime  @default(now())
-  endsAt     DateTime?
+  id        String    @id @default(uuid())
+  title     String
+  status    String    @default("draft") // draft, active, ended
+  createdAt DateTime  @default(now())
+  startsAt  DateTime  @default(now())
+  endsAt    DateTime?
 
   // New Relational Fields (Nullable for safe migration, will be populated by migration script)
-  teamAId    String?
-  teamA      Team?     @relation("BattleTeamA", fields: [teamAId], references: [id])
-  
-  teamBId    String?
-  teamB      Team?     @relation("BattleTeamB", fields: [teamBId], references: [id])
+  teamAId String?
+  teamA   Team?   @relation("BattleTeamA", fields: [teamAId], references: [id])
+
+  teamBId String?
+  teamB   Team?   @relation("BattleTeamB", fields: [teamBId], references: [id])
 
   // Deprecated fields (kept for migration, to be removed later)
   teamAName  String?
   teamAColor String?
   teamBName  String?
   teamBColor String?
-  
-  supports   Support[]
+
+  supports Support[]
 }
 
 model Support {
-  id            String   @id @default(uuid())
-  battleId      String
-  
+  id       String @id @default(uuid())
+  battleId String
+
   // Deprecated field
-  legacyTeam    String?   @map("team") // "A" or "B"
-  
+  legacyTeam String? @map("team") // "A" or "B"
+
   // New Relational Field
-  teamId        String?
-  team          Team?     @relation(fields: [teamId], references: [id])
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
 
-  amount        Float
-  currency      String   @default("USD")
-  supporterName String
-  message       String?
-  paymentStatus String   @default("pending") // pending, paid
-  createdAt     DateTime @default(now())
+  amount          Float
+  currency        String    @default("USD")
+  supporterName   String
+  message         String?
+  paymentStatus   String    @default("pending") // pending, paid
+  createdAt       DateTime  @default(now())
   // ePayco Integration Fields
-  refPayco      String?  @unique // Reference returned by ePayco
-  transactionId String?  // Internal ePayco Transaction ID
+  refPayco        String?   @unique // Reference returned by ePayco
+  transactionId   String? // Internal ePayco Transaction ID
   paymentResponse String? // Text response (e.g., Aceptada, Rechazada)
-  paymentCode   Int?     // Numeric response code (1 = Aceptada, etc)
-  paymentDate   DateTime? // Date of payment confirmation from ePayco
-  expiresAt     DateTime @default(dbgenerated("NOW() + interval '30 minutes'")) // Validity of the payment order
+  paymentCode     Int? // Numeric response code (1 = Aceptada, etc)
+  paymentDate     DateTime? // Date of payment confirmation from ePayco
+  expiresAt       DateTime  @default(dbgenerated("NOW() + interval '30 minutes'")) // Validity of the payment order
 
-  battle        Battle   @relation(fields: [battleId], references: [id])
+  battle Battle @relation(fields: [battleId], references: [id])
 }
