@@ -307,17 +307,20 @@ input:focus, textarea:focus {
   border: 2px solid;
   border-radius: 16px;
   padding: 24px;
+  min-width: 0;
 }
 .ranking-title {
   text-align: center;
   font-size: 1.5rem;
   margin-bottom: 24px;
   text-transform: uppercase;
+  word-wrap: break-word;
 }
 .ranking-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 .ranking-card {
   display: flex;
@@ -326,6 +329,7 @@ input:focus, textarea:focus {
   padding: 12px;
   border-radius: 12px;
   gap: 12px;
+  min-width: 0;
 }
 .ranking-pos {
   font-size: 1.2rem;
