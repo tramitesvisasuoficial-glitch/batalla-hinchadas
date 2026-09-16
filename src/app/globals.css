@@ -346,10 +346,14 @@ input:focus, textarea:focus {
 }
 .ranking-info {
   flex: 1;
+  min-width: 0;
 }
 .ranking-name {
   font-weight: 700;
   font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ranking-badge {
   font-size: 0.85rem;
@@ -363,6 +367,28 @@ input:focus, textarea:focus {
 .ranking-amount {
   font-weight: 900;
   font-size: 1.1rem;
+  text-align: right;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .ranking-col {
+    padding: 16px;
+  }
+  .ranking-card {
+    padding: 8px;
+    gap: 8px;
+  }
+  .ranking-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  .ranking-name {
+    font-size: 1rem;
+  }
+  .ranking-amount {
+    font-size: 1rem;
+  }
 }
 .no-supports {
   text-align: center;
