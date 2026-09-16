@@ -68,6 +68,14 @@ model Support {
   currency        String    @default("USD")
   supporterName   String
   message         String?
+  
+  // Future Supporter Identity Fields (Optional)
+  avatarUrl       String?
+  displayName     String?
+  channelName     String?
+  handle          String?
+  channelUrl      String?
+  
   paymentStatus   String    @default("pending") // pending, paid
   createdAt       DateTime  @default(now())
   // ePayco Integration Fields
