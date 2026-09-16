@@ -149,51 +149,61 @@ export default async function BattlePage({ params, searchParams }: Props) {
       />
 
       {/* Rankings Section */}
-      <div className="rankings-container">
-        <div className="ranking-col" style={{ borderColor: battle.teamA!.color || '#333' }}>
-          <h3 className="ranking-title" style={{ color: battle.teamA!.color || '#fff' }}>
-            🏆 TOP HINCHAS<br/>{battle.teamA!.name.toUpperCase()}
-          </h3>
-          <div className="ranking-list">
-            {rankingA.map(s => (
-              <div key={s.id} className="ranking-card">
-                <div className="ranking-pos">#{s.position}</div>
-                <div className="ranking-avatar" style={{ backgroundColor: battle.teamA!.color || '#333', color: '#fff' }}>
-                  {getInitials(s.supporterName)}
+      {paidSupports.length > 0 ? (
+        <div className="rankings-container">
+          <div className="ranking-col" style={{ borderColor: battle.teamA!.color || '#333' }}>
+            <h3 className="ranking-title" style={{ color: battle.teamA!.color || '#fff' }}>
+              🏆 TOP HINCHAS<br/>{battle.teamA!.name.toUpperCase()}
+            </h3>
+            <div className="ranking-list">
+              {rankingA.map(s => (
+                <div key={s.id} className="ranking-card">
+                  <div className="ranking-pos">#{s.position}</div>
+                  <div className="ranking-avatar" style={{ backgroundColor: battle.teamA!.color || '#333', color: '#fff' }}>
+                    {getInitials(s.supporterName)}
+                  </div>
+                  <div className="ranking-info">
+                    <div className="ranking-name">{s.supporterName}</div>
+                    <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
+                  </div>
+                  <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
                 </div>
-                <div className="ranking-info">
-                  <div className="ranking-name">{s.supporterName}</div>
-                  <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
-                </div>
-                <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
-              </div>
-            ))}
-            {rankingA.length === 0 && <p className="no-supports">Sé el primero en apoyar al {battle.teamA!.name}</p>}
+              ))}
+              {rankingA.length === 0 && <p className="no-supports">Sé el primero en apoyar al {battle.teamA!.name}</p>}
+            </div>
           </div>
-        </div>
 
-        <div className="ranking-col" style={{ borderColor: battle.teamB!.color || '#333' }}>
-          <h3 className="ranking-title" style={{ color: battle.teamB!.color || '#fff' }}>
-            🏆 TOP HINCHAS<br/>{battle.teamB!.name.toUpperCase()}
-          </h3>
-          <div className="ranking-list">
-            {rankingB.map(s => (
-              <div key={s.id} className="ranking-card">
-                <div className="ranking-pos">#{s.position}</div>
-                <div className="ranking-avatar" style={{ backgroundColor: battle.teamB!.color || '#333', color: '#fff' }}>
-                  {getInitials(s.supporterName)}
+          <div className="ranking-col" style={{ borderColor: battle.teamB!.color || '#333' }}>
+            <h3 className="ranking-title" style={{ color: battle.teamB!.color || '#fff' }}>
+              🏆 TOP HINCHAS<br/>{battle.teamB!.name.toUpperCase()}
+            </h3>
+            <div className="ranking-list">
+              {rankingB.map(s => (
+                <div key={s.id} className="ranking-card">
+                  <div className="ranking-pos">#{s.position}</div>
+                  <div className="ranking-avatar" style={{ backgroundColor: battle.teamB!.color || '#333', color: '#fff' }}>
+                    {getInitials(s.supporterName)}
+                  </div>
+                  <div className="ranking-info">
+                    <div className="ranking-name">{s.supporterName}</div>
+                    <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
+                  </div>
+                  <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
                 </div>
-                <div className="ranking-info">
-                  <div className="ranking-name">{s.supporterName}</div>
-                  <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
-                </div>
-                <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
-              </div>
-            ))}
-            {rankingB.length === 0 && <p className="no-supports">Sé el primero en apoyar al {battle.teamB!.name}</p>}
+              ))}
+              {rankingB.length === 0 && <p className="no-supports">Sé el primero en apoyar al {battle.teamB!.name}</p>}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="rankings-empty-state" style={{ textAlign: "center", padding: "48px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: "16px", margin: "24px 0" }}>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: "900", color: "#fff", marginBottom: "16px" }}>SÉ EL PRIMERO EN APARECER EN EL RANKING DE ESTA BATALLA</h2>
+          <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginTop: "24px" }}>
+            <div style={{ padding: "12px 24px", borderRadius: "12px", border: `1px solid ${battle.teamA!.color || '#fff'}`, color: battle.teamA!.color || '#fff', fontWeight: "bold" }}>{battle.teamA!.name}</div>
+            <div style={{ padding: "12px 24px", borderRadius: "12px", border: `1px solid ${battle.teamB!.color || '#fff'}`, color: battle.teamB!.color || '#fff', fontWeight: "bold" }}>{battle.teamB!.name}</div>
+          </div>
+        </div>
+      )}
 
       {/* Últimos Hinchas */}
       {latestSupports.length > 0 && (

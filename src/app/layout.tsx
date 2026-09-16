@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,24 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <div style={{ background: "#f59e0b", color: "#000", textAlign: "center", padding: "8px", fontSize: "0.85rem", fontWeight: "bold" }}>
           ENTORNO DE PRUEBA — Los pagos realizados aquí utilizan el modo Sandbox y no representan cobros reales.
         </div>
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+          <Navbar />
           <div style={{ flex: 1 }}>
             {children}
           </div>
-          <footer style={{ textAlign: "center", padding: "24px", marginTop: "auto", borderTop: "1px solid #1e293b", fontSize: "0.85rem", color: "#64748b" }}>
-            <p style={{ marginBottom: "12px" }}>© {new Date().getFullYear()} Batalla de Hinchadas. Todos los derechos reservados.</p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
-              <a href="/terms" style={{ color: "#94a3b8", textDecoration: "none" }}>Términos y Condiciones</a>
-              <a href="/privacy" style={{ color: "#94a3b8", textDecoration: "none" }}>Privacidad</a>
-              <a href="/refunds" style={{ color: "#94a3b8", textDecoration: "none" }}>Reembolsos</a>
-              <a href="/contact" style={{ color: "#94a3b8", textDecoration: "none" }}>Contacto</a>
-            </div>
-          </footer>
+          <Footer />
         </div>
         <Script src="https://checkout.epayco.co/checkout.js" strategy="lazyOnload" />
       </body>

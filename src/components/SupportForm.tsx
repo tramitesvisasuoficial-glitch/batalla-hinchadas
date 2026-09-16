@@ -24,9 +24,47 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
 
   const [pendingSupportId, setPendingSupportId] = useState<string | null>(null);
   const [confirmedData, setConfirmedData] = useState<any>(null);
+  const [followEmail, setFollowEmail] = useState("");
+  const [followStatus, setFollowStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [currentATotal, setCurrentATotal] = useState(initialTeamATotal);
+  const [currentBTotal, setCurrentBTotal] = useState(initialTeamBTotal);
 
-  const total = initialTeamATotal + initialTeamBTotal;
-  const progressA = total === 0 ? 50 : (initialTeamATotal / total) * 100;
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/battles/${battle.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.teamATotal !== undefined && data.teamBTotal !== undefined) {
+            setCurrentATotal(data.teamATotal);
+            setCurrentBTotal(data.teamBTotal);
+          }
+        }
+      } catch (e) {
+        console.error("Error polling battle stats", e);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [battle.id]);
+
+  const handleFollow = async () => {
+    if (!followEmail || !followEmail.includes('@')) return alert("Ingresa un email válido");
+    setFollowStatus("loading");
+    try {
+      const res = await fetch("/api/followers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ battleId: battle.id, email: followEmail })
+      });
+      if (res.ok) setFollowStatus("success");
+      else setFollowStatus("error");
+    } catch {
+      setFollowStatus("error");
+    }
+  };
+
+  const total = currentATotal + currentBTotal;
+  const progressA = total === 0 ? 50 : (currentATotal / total) * 100;
 
   const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
   const isPlayable = battle.status === "active" && timeStatus === "active";
@@ -112,7 +150,10 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const handleShare = async () => {
     if (!confirmedData) return;
     
-    const text = `🔥 Ya estoy en la Batalla de Hinchadas.\n\nEstoy apoyando al ${confirmedData.teamName} ⚪\n\nEstoy en la posición #${confirmedData.position}.\n\n¿De qué lado estás?\n\n${window.location.href}`;
+    const currentTotal = currentATotal + currentBTotal;
+    const progressA = currentTotal === 0 ? 50 : Math.round((currentATotal / currentTotal) * 100);
+    const myPercentage = confirmedData.teamId === battle.teamAId ? progressA : (100 - progressA);
+    const text = `🔥 Ya estoy en la Batalla de Hinchadas.\n\nAcabo de entrar con ${confirmedData.teamName} (${myPercentage}%)\n\n¿Tú de qué lado estás?\n\n${window.location.origin}/b/${battle.id}`;
     
     if (navigator.share) {
       try {
@@ -157,9 +198,40 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             </div>
           </div>
         </div>
-        <button onClick={handleShare} className="submit-btn share-btn" style={{ background: confirmedData.teamColor || '#fff', color: '#000' }}>
+        <button onClick={handleShare} className="submit-btn share-btn" style={{ background: confirmedData.teamColor || '#fff', color: '#000', marginBottom: "16px" }}>
           COMPARTIR MI PARTICIPACIÓN
         </button>
+        <button onClick={() => window.location.reload()} className="btn-secondary" style={{ width: "100%", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", fontWeight: "bold", marginBottom: "32px" }}>
+          VER LA BATALLA
+        </button>
+
+        <div style={{ background: "rgba(255,255,255,0.02)", padding: "24px", borderRadius: "16px", border: "1px solid var(--border)", textAlign: "center" }}>
+          <h3 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>🔔 SEGUIR ESTA BATALLA</h3>
+          <p style={{ color: "#94a3b8", fontSize: "0.9rem", marginBottom: "16px" }}>Recibe notificaciones cuando haya cambios importantes en la distribución.</p>
+          
+          {followStatus === "success" ? (
+            <div style={{ color: "#10b981", fontWeight: "bold", padding: "12px", background: "rgba(16, 185, 129, 0.1)", borderRadius: "8px" }}>
+              ¡Te hemos anotado! Estás siguiendo la batalla.
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+              <input 
+                type="email" 
+                placeholder="Tu correo electrónico" 
+                value={followEmail}
+                onChange={e => setFollowEmail(e.target.value)}
+                style={{ padding: "12px", borderRadius: "8px", border: "1px solid #334155", background: "#0f172a", color: "#fff", width: "100%" }}
+              />
+              <button 
+                onClick={handleFollow}
+                disabled={followStatus === "loading"}
+                style={{ padding: "12px", borderRadius: "8px", background: "#f59e0b", color: "#000", fontWeight: "bold", cursor: followStatus === "loading" ? "not-allowed" : "pointer", border: "none" }}
+              >
+                {followStatus === "loading" ? "Procesando..." : "SEGUIR BATALLA"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -175,8 +247,8 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
       <BattlePitch 
         teamA={battle.teamA} 
         teamB={battle.teamB} 
-        totalA={initialTeamATotal} 
-        totalB={initialTeamBTotal} 
+        totalA={currentATotal} 
+        totalB={currentBTotal} 
       />
 
       {isPlayable && !pendingSupportId && (
@@ -193,6 +265,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 background: selectedTeamId === battle.teamAId ? teamAColor : "transparent"
               }}
             >
+              {battle.teamA.logo && <img src={battle.teamA.logo} alt="" style={{ width: "24px", height: "24px", objectFit: "contain" }} />}
               {battle.teamA.name}
             </button>
             <button 
@@ -204,6 +277,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 background: selectedTeamId === battle.teamBId ? teamBColor : "transparent"
               }}
             >
+              {battle.teamB.logo && <img src={battle.teamB.logo} alt="" style={{ width: "24px", height: "24px", objectFit: "contain" }} />}
               {battle.teamB.name}
             </button>
           </div>
@@ -233,35 +307,47 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             />
           </div>
 
-          <div className="form-group">
-            <label>Nombre o apodo (Opcional)</label>
-            <input 
-              type="text" 
-              placeholder="Ej: Hincha123" 
-              value={supporterName}
-              maxLength={50}
-              onChange={e => setSupporterName(e.target.value)}
-            />
-          </div>
+          <details style={{ marginBottom: "24px", background: "rgba(255,255,255,0.02)", padding: "16px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+            <summary style={{ cursor: "pointer", fontWeight: "bold", color: "#94a3b8", display: "flex", alignItems: "center", outline: "none" }}>
+              Personalizar mi participación <span style={{ marginLeft: "auto", fontSize: "0.8rem" }}>▼</span>
+            </summary>
+            <div style={{ marginTop: "16px" }}>
+              <div className="form-group">
+                <label>Nombre o apodo (Opcional)</label>
+                <input 
+                  type="text" 
+                  placeholder="Ej: Hincha123" 
+                  value={supporterName}
+                  maxLength={50}
+                  onChange={e => setSupporterName(e.target.value)}
+                />
+              </div>
 
-          <div className="form-group">
-            <label>Mensaje (Opcional)</label>
-            <input 
-              type="text" 
-              placeholder="Deja un mensaje corto..." 
-              maxLength={80} 
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-            />
-          </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Mensaje (Opcional)</label>
+                <input 
+                  type="text" 
+                  placeholder="Deja un mensaje corto..." 
+                  maxLength={80} 
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                />
+              </div>
+            </div>
+          </details>
 
           <button 
             onClick={handleSubmit}
-            className="submit-btn" 
-            style={{ background: "#ffffff", color: "#000" }}
+            className={`submit-btn ${currentAmount <= 0 || loading ? 'disabled' : ''}`}
+            style={{ 
+              background: selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#ffffff", 
+              color: "#000",
+              fontWeight: 900,
+              boxShadow: `0 4px 15px ${selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#fff"}40`
+            }}
             disabled={loading || currentAmount <= 0 || currentAmount > 1000}
           >
-            {loading ? "PROCESANDO..." : `ENTRA EN LA HINCHADA (US$${currentAmount})`}
+            {loading ? "PROCESANDO..." : `ENTRA EN LA HINCHADA DE ${selectedTeamId === battle.teamAId ? battle.teamA.name.toUpperCase() : selectedTeamId === battle.teamBId ? battle.teamB.name.toUpperCase() : "TU EQUIPO"} · US$${currentAmount}`}
           </button>
           
         </div>

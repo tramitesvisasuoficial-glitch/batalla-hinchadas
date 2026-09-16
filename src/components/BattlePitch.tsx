@@ -79,8 +79,8 @@ export default function BattlePitch({ teamA, teamB, totalA, totalB, compact = fa
       </div>
       
       {total === 0 && (
-        <div className="bp-empty-state">
-          Estado de la batalla: <strong>50% — 50%</strong>. Ninguna hinchada ha tomado la ventaja todavía.
+        <div className="bp-empty-state" style={{ color: "#f59e0b", fontWeight: "600", fontSize: "1.05rem" }}>
+          La batalla empieza contigo. Sé el primero en mover el balón.
         </div>
       )}
       {total > 0 && (

@@ -41,6 +41,16 @@ model Battle {
   teamBColor String?
 
   supports Support[]
+  followers Follower[]
+}
+
+model Follower {
+  id        String   @id @default(uuid())
+  battleId  String
+  email     String
+  createdAt DateTime @default(now())
+
+  battle    Battle   @relation(fields: [battleId], references: [id])
 }
 
 model Support {

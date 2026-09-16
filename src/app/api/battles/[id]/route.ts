@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const battle = await prisma.battle.findUnique({
+      where: { id },
+      include: {
+        supports: {
+          where: { paymentStatus: 'paid' }
+        }
+      }
+    });
+    
+    if (!battle) {
+      return NextResponse.json({ error: "Batalla no encontrada" }, { status: 404 });
+    }
+
+    const teamATotal = battle.supports.filter(s => s.teamId === battle.teamAId).reduce((acc, curr) => acc + curr.amount, 0);
+    const teamBTotal = battle.supports.filter(s => s.teamId === battle.teamBId).reduce((acc, curr) => acc + curr.amount, 0);
+
+    return NextResponse.json({ teamATotal, teamBTotal }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

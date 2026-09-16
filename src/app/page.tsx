@@ -60,9 +60,9 @@ export default async function HomePage() {
               ⚔️ ENTRAR A UNA BATALLA
             </Link>
           ) : (
-            <button className="btn-primary" disabled style={{ opacity: 0.5 }}>
+            <a href="#batallas" className="btn-primary" style={{ opacity: 0.5 }}>
               ⚔️ ENTRAR A UNA BATALLA
-            </button>
+            </a>
           )}
           <a href="#batallas" className="btn-secondary">VER BATALLAS</a>
         </div>
