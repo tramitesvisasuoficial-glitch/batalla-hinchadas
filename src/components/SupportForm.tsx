@@ -199,7 +199,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         }
       }
 
-      const res = await fetch("/api/supports", {
+      const res = await fetch("/api/supports/paypal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -219,21 +219,10 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
       if (res.ok) {
         const data = await res.json();
         
-        if (data.support && data.support.id) {
-          setPendingSupportId(data.support.id);
-        }
-
-        if (data.checkoutData) {
-          const epayco = (window as any).ePayco;
-          if (epayco) {
-            const checkout = epayco.checkout.configure({
-              key: process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY || "",
-              test: process.env.NEXT_PUBLIC_EPAYCO_TEST === "true"
-            });
-            checkout.open(data.checkoutData);
-          } else {
-            alert("Error cargando la pasarela de pagos. Por favor intenta de nuevo.");
-          }
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          alert("No se pudo obtener la URL de pago de PayPal");
         }
       } else {
         const error = await res.json();

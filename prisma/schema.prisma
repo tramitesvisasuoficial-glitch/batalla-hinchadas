@@ -77,6 +77,8 @@ model Support {
   channelUrl      String?
   
   paymentStatus   String    @default("pending") // pending, paid
+  paymentGateway  String?   @default("paypal") // Which gateway processed this (e.g., paypal)
+  gatewayRef      String?   @unique // The Order ID from PayPal
   createdAt       DateTime  @default(now())
   // ePayco Integration Fields
   refPayco        String?   @unique // Reference returned by ePayco
