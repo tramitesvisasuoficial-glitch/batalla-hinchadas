@@ -395,7 +395,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 <input 
                   type="file" 
                   accept="image/*" 
-                  capture
+                  capture="environment" 
                   ref={fileInputRefCamera} 
                   style={{ display: "none" }} 
                   onChange={async (e) => {
@@ -497,15 +497,14 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             onClick={handleSubmit}
             className={`submit-btn ${currentAmount <= 0 || loading ? 'disabled' : ''} ${pulse ? 'pulse-anim' : ''}`}
             style={{ 
-              background: selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#ffffff", 
-              color: (selectedTeamId === battle.teamAId && teamAColor.toLowerCase() === '#ffffff') || 
-                     (selectedTeamId === battle.teamBId && teamBColor.toLowerCase() === '#ffffff') ? "#000" : "#fff",
+              background: "#10b981", 
+              color: "#fff",
               fontWeight: 900,
-              boxShadow: `0 4px 15px ${selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#fff"}40`
+              boxShadow: `0 4px 15px rgba(16, 185, 129, 0.4)`
             }}
             disabled={loading || currentAmount <= 0 || currentAmount > 1000}
           >
-            {loading ? "PROCESANDO..." : `ENTRA EN LA HINCHADA DE ${selectedTeamId === battle.teamAId ? battle.teamA.name.toUpperCase() : selectedTeamId === battle.teamBId ? battle.teamB.name.toUpperCase() : "TU EQUIPO"} · US$${currentAmount}`}
+            {loading ? "PROCESANDO..." : `APOYAR A ${selectedTeamId === battle.teamAId ? battle.teamA.name.toUpperCase() : selectedTeamId === battle.teamBId ? battle.teamB.name.toUpperCase() : "TU EQUIPO"} · US$${currentAmount}`}
           </button>
           
         </div>
