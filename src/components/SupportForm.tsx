@@ -27,6 +27,19 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const [channelUrl, setChannelUrl] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [pulse, setPulse] = useState(false);
+  const [lastAmount, setLastAmount] = useState(0);
+
+  // Pulse animation on amount change
+  useEffect(() => {
+    if (currentAmount > 0 && currentAmount !== lastAmount) {
+      setPulse(true);
+      setLastAmount(currentAmount);
+      const t = setTimeout(() => setPulse(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [currentAmount, lastAmount]);
+
   const fileInputRefGallery = useRef<HTMLInputElement>(null);
   const fileInputRefCamera = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -380,7 +393,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 <input 
                   type="file" 
                   accept="image/*" 
-                  capture="environment" 
+                  capture
                   ref={fileInputRefCamera} 
                   style={{ display: "none" }} 
                   onChange={async (e) => {
@@ -480,10 +493,11 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
 
           <button 
             onClick={handleSubmit}
-            className={`submit-btn ${currentAmount <= 0 || loading ? 'disabled' : ''}`}
+            className={`submit-btn ${currentAmount <= 0 || loading ? 'disabled' : ''} ${pulse ? 'pulse-anim' : ''}`}
             style={{ 
               background: selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#ffffff", 
-              color: "#000",
+              color: (selectedTeamId === battle.teamAId && teamAColor.toLowerCase() === '#ffffff') || 
+                     (selectedTeamId === battle.teamBId && teamBColor.toLowerCase() === '#ffffff') ? "#000" : "#fff",
               fontWeight: 900,
               boxShadow: `0 4px 15px ${selectedTeamId === battle.teamAId ? teamAColor : selectedTeamId === battle.teamBId ? teamBColor : "#fff"}40`
             }}

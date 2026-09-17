@@ -17,27 +17,32 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        {/* LOGO */}
-        <Link href="/" className="navbar-logo" onClick={handleLinkClick}>
-          BATALLAS
-        </Link>
+        {/* LOGO AND BACK */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {isBattleRoute && (
+            <Link href="/" onClick={handleLinkClick} style={{ color: "#fff", textDecoration: "none", fontSize: "1.2rem", fontWeight: "bold" }}>
+              ←
+            </Link>
+          )}
+          <Link href="/" className="navbar-logo" onClick={handleLinkClick}>
+            BATALLAS
+          </Link>
+        </div>
 
         {/* MOBILE TOGGLE */}
-        <button 
-          className="navbar-toggle" 
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? "✕" : "☰"}
-        </button>
+        {!isBattleRoute && (
+          <button 
+            className="navbar-toggle" 
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? "✕" : "☰"}
+          </button>
+        )}
 
         {/* LINKS */}
         <div className={`navbar-links ${isOpen ? "open" : ""}`}>
-          {isBattleRoute ? (
-            <Link href="/" className="navbar-back-btn" onClick={handleLinkClick}>
-              ← Volver a BATALLAS
-            </Link>
-          ) : (
+          {!isBattleRoute && (
             <>
               <Link href="/" className="navbar-link" onClick={handleLinkClick}>Inicio</Link>
               <Link href="/#batallas" className="navbar-link" onClick={handleLinkClick}>Batallas</Link>
