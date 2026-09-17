@@ -6,8 +6,8 @@ const PAYPAL_API_URL = process.env.NODE_ENV === 'production'
  * Generates an access token for the PayPal REST API.
  */
 export async function getPayPalAccessToken(): Promise<string> {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  const clientId = (process.env.PAYPAL_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.PAYPAL_CLIENT_SECRET || '').trim();
 
   if (!clientId || !clientSecret) {
     throw new Error('PayPal Client ID or Secret is not configured in .env');
