@@ -43,6 +43,59 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   }, [currentAmount, lastAmount]);
 
   const fileInputRefGallery = useRef<HTMLInputElement>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (err) {
+      alert("No se pudo acceder a la cámara. Asegúrate de dar los permisos.");
+      console.error(err);
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+            try {
+              const compressed = await compressImage(file, 800);
+              setAvatarFile(compressed);
+              setAvatarPreview(URL.createObjectURL(compressed));
+              stopCamera();
+            } catch (e: any) {
+              alert(e.message);
+            }
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    }
+  };
+
   const fileInputRefCamera = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [timeStatus, setTimeStatus] = useState<"before" | "active" | "ended">("active");
@@ -368,8 +421,16 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
             <div style={{ marginTop: "16px" }}>
               <div className="form-group" style={{ marginBottom: "20px" }}>
                 <label>Tu Foto (Opcional)</label>
-                
-                {avatarPreview ? (
+                {showCamera ? (
+                  <div style={{ position: "relative", width: "100%", borderRadius: "8px", overflow: "hidden", background: "#000", border: "1px solid var(--border)" }}>
+                    <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", display: "block", aspectRatio: "1/1", objectFit: "cover" }} />
+                    <canvas ref={canvasRef} style={{ display: "none" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px", background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)", display: "flex", gap: "12px", justifyContent: "center" }}>
+                      <button type="button" onClick={stopCamera} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.2)", border: "none", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>Cancelar</button>
+                      <button type="button" onClick={capturePhoto} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "#10b981", border: "none", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>📸 Capturar</button>
+                    </div>
+                  </div>
+                ) : avatarPreview ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                     <img src={avatarPreview} alt="Preview" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }} />
                     <button type="button" onClick={() => {
@@ -382,7 +443,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 ) : (
                   <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <button type="button" onClick={() => fileInputRefCamera.current?.click()} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                      <button type="button" onClick={startCamera} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                         📷 Tomar foto
                       </button>
                       <button type="button" onClick={() => fileInputRefGallery.current?.click()} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
