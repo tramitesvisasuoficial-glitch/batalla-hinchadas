@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { Battle, Support } from "@prisma/client";
 import Countdown from "./Countdown";
+import { Avatar } from './Avatar';
+import { compressImage } from '../lib/image-utils';
+import { useRef } from 'react';
 import BattlePitch from "./BattlePitch";
 
 type Team = { id: string; name: string; color: string | null; logo: string | null };
@@ -19,6 +22,13 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const [customAmount, setCustomAmount] = useState<string>("");
   const [supporterName, setSupporterName] = useState("");
   const [message, setMessage] = useState("");
+  const [handle, setHandle] = useState("");
+  const [channelName, setChannelName] = useState("");
+  const [channelUrl, setChannelUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRefGallery = useRef<HTMLInputElement>(null);
+  const fileInputRefCamera = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [timeStatus, setTimeStatus] = useState<"before" | "active" | "ended">("active");
 
@@ -103,6 +113,24 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
     setPendingSupportId(null);
 
     try {
+      let finalAvatarUrl = null;
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append("file", avatarFile);
+        try {
+          const uploadRes = await fetch("/api/upload-avatar", {
+            method: "POST",
+            body: formData
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            finalAvatarUrl = uploadData.url;
+          }
+        } catch (e) {
+          console.error("Error al subir el avatar", e);
+        }
+      }
+
       const res = await fetch("/api/supports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +140,11 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
           amount: currentAmount,
           currency: "USD",
           supporterName: supporterName || "Hincha Anónimo",
-          message
+          message,
+          handle,
+          channelName,
+          channelUrl,
+          avatarUrl: finalAvatarUrl
         })
       });
 
@@ -179,7 +211,14 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
         <h2 className="success-title">🔥 ¡YA ESTÁS EN LA BATALLA!</h2>
         <div className="share-card" style={{ borderColor: confirmedData.teamColor || '#fff' }}>
           <div className="sc-header" style={{ backgroundColor: confirmedData.teamColor || '#333' }}>
-            <div className="sc-avatar">{confirmedData.supporterName.substring(0,2).toUpperCase()}</div>
+            <div className="sc-avatar" style={{ background: 'transparent' }}>
+              <Avatar 
+                name={confirmedData.supporterName === "Hincha Anónimo" ? "" : confirmedData.supporterName} 
+                handle={confirmedData.handle}
+                avatarUrl={confirmedData.avatarUrl}
+                size={48}
+              />
+            </div>
             <h3>{confirmedData.supporterName}</h3>
             <p>{confirmedData.teamName}</p>
           </div>
@@ -312,6 +351,72 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
               Personalizar mi participación <span style={{ marginLeft: "auto", fontSize: "0.8rem" }}>▼</span>
             </summary>
             <div style={{ marginTop: "16px" }}>
+              <div className="form-group" style={{ marginBottom: "20px" }}>
+                <label>Tu Foto (Opcional)</label>
+                
+                {avatarPreview ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <img src={avatarPreview} alt="Preview" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }} />
+                    <button type="button" onClick={() => {
+                      setAvatarFile(null);
+                      setAvatarPreview(null);
+                    }} style={{ padding: "8px 12px", borderRadius: "6px", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", cursor: "pointer" }}>
+                      Cambiar foto
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button type="button" onClick={() => fileInputRefCamera.current?.click()} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                        📷 Tomar foto
+                      </button>
+                      <button type="button" onClick={() => fileInputRefGallery.current?.click()} style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                        🖼️ De galería
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="user" 
+                  ref={fileInputRefCamera} 
+                  style={{ display: "none" }} 
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const compressed = await compressImage(file, 800);
+                      setAvatarFile(compressed);
+                      setAvatarPreview(URL.createObjectURL(compressed));
+                    } catch (error: any) {
+                      alert(error.message);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                
+                <input 
+                  type="file" 
+                  accept="image/jpeg, image/png, image/webp" 
+                  ref={fileInputRefGallery} 
+                  style={{ display: "none" }} 
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const compressed = await compressImage(file, 800);
+                      setAvatarFile(compressed);
+                      setAvatarPreview(URL.createObjectURL(compressed));
+                    } catch (error: any) {
+                      alert(error.message);
+                    }
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+
               <div className="form-group">
                 <label>Nombre o apodo (Opcional)</label>
                 <input 
@@ -320,6 +425,43 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                   value={supporterName}
                   maxLength={50}
                   onChange={e => setSupporterName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Usuario de Red Social (Ej: @tu_usuario)</label>
+                <input 
+                  type="text" 
+                  placeholder="@handle" 
+                  maxLength={30}
+                  value={handle}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === "" || val.startsWith("@")) setHandle(val);
+                    else setHandle("@" + val);
+                  }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Canal / Proyecto (Si tienes uno)</label>
+                <input 
+                  type="text" 
+                  placeholder="Nombre de tu canal" 
+                  maxLength={50}
+                  value={channelName}
+                  onChange={e => setChannelName(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Enlace de tu Canal (URL)</label>
+                <input 
+                  type="url" 
+                  placeholder="https://..." 
+                  maxLength={150}
+                  value={channelUrl}
+                  onChange={e => setChannelUrl(e.target.value)}
                 />
               </div>
 

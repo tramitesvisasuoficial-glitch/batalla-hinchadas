@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { battleId, teamId, amount, currency, supporterName, message } = body;
+    const { battleId, teamId, amount, currency, supporterName, message, handle, channelName, channelUrl, avatarUrl } = body;
 
     if (!battleId || !teamId || amount === undefined || !currency) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -25,6 +25,23 @@ export async function POST(request: Request) {
     // Clean strings
     const safeSupporterName = supporterName ? String(supporterName).trim().substring(0, 50) : "Hincha Anónimo";
     const safeMessage = message ? String(message).trim().substring(0, 80) : null;
+    
+    // Identity fields
+    let safeHandle = handle ? String(handle).trim().substring(0, 30) : null;
+    if (safeHandle && !safeHandle.startsWith("@")) safeHandle = "@" + safeHandle;
+    const safeChannelName = channelName ? String(channelName).trim().substring(0, 50) : null;
+    
+    let safeChannelUrl = null;
+    if (channelUrl) {
+      try {
+        const url = new URL(String(channelUrl).trim());
+        if (url.protocol === "http:" || url.protocol === "https:") {
+          safeChannelUrl = url.href.substring(0, 150);
+        }
+      } catch (e) {
+        // Invalid URL, ignore it
+      }
+    }
 
     const battle = await prisma.battle.findUnique({
       where: { id: battleId }
@@ -63,6 +80,10 @@ export async function POST(request: Request) {
         currency: "USD",
         supporterName: safeSupporterName,
         message: safeMessage,
+        handle: safeHandle,
+        channelName: safeChannelName,
+        channelUrl: safeChannelUrl,
+        avatarUrl,
         paymentStatus: "pending"
       }
     });

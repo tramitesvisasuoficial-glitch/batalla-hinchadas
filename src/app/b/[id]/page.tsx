@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import SupportForm from "@/components/SupportForm";
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Support } from "@prisma/client";
+import { Avatar } from "@/components/Avatar";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -159,11 +160,19 @@ export default async function BattlePage({ params, searchParams }: Props) {
               {rankingA.map(s => (
                 <div key={s.id} className="ranking-card">
                   <div className="ranking-pos">#{s.position}</div>
-                  <div className="ranking-avatar" style={{ backgroundColor: battle.teamA!.color || '#333', color: '#fff' }}>
-                    {getInitials(s.supporterName)}
+                  <div className="ranking-avatar" style={{ background: 'transparent' }}>
+                    <Avatar name={s.supporterName} handle={s.handle} avatarUrl={s.avatarUrl} size={40} />
                   </div>
                   <div className="ranking-info">
-                    <div className="ranking-name">{s.supporterName}</div>
+                    <div className="ranking-name" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 'bold' }}>{s.supporterName}</span>
+                      {s.handle && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{s.handle}</span>}
+                    </div>
+                    {s.channelUrl && (
+                      <a href={s.channelUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none', marginTop: '2px', display: 'inline-block' }}>
+                        🔗 {s.channelName || 'Ver Canal'}
+                      </a>
+                    )}
                     <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
                   </div>
                   <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
@@ -181,11 +190,19 @@ export default async function BattlePage({ params, searchParams }: Props) {
               {rankingB.map(s => (
                 <div key={s.id} className="ranking-card">
                   <div className="ranking-pos">#{s.position}</div>
-                  <div className="ranking-avatar" style={{ backgroundColor: battle.teamB!.color || '#333', color: '#fff' }}>
-                    {getInitials(s.supporterName)}
+                  <div className="ranking-avatar" style={{ background: 'transparent' }}>
+                    <Avatar name={s.supporterName} handle={s.handle} avatarUrl={s.avatarUrl} size={40} />
                   </div>
                   <div className="ranking-info">
-                    <div className="ranking-name">{s.supporterName}</div>
+                    <div className="ranking-name" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 'bold' }}>{s.supporterName}</span>
+                      {s.handle && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{s.handle}</span>}
+                    </div>
+                    {s.channelUrl && (
+                      <a href={s.channelUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none', marginTop: '2px', display: 'inline-block' }}>
+                        🔗 {s.channelName || 'Ver Canal'}
+                      </a>
+                    )}
                     <div className="ranking-badge">{s.badgeEmoji} {s.badge}</div>
                   </div>
                   <div className="ranking-amount">US${s.amount.toFixed(2)}</div>
@@ -215,8 +232,8 @@ export default async function BattlePage({ params, searchParams }: Props) {
               const teamColor = team?.color || "#333";
               return (
                 <div key={s.id} className="ranking-card latest-card">
-                  <div className="ranking-avatar" style={{ backgroundColor: teamColor, color: '#fff' }}>
-                    {getInitials(s.supporterName)}
+                  <div className="ranking-avatar" style={{ background: 'transparent' }}>
+                    <Avatar name={s.supporterName} handle={s.handle} avatarUrl={s.avatarUrl} size={40} />
                   </div>
                   <div className="ranking-info">
                     <div className="ranking-name">{s.supporterName}</div>
