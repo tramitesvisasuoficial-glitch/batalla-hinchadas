@@ -380,7 +380,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
                 <input 
                   type="file" 
                   accept="image/*" 
-                  capture="user" 
+                  capture="environment" 
                   ref={fileInputRefCamera} 
                   style={{ display: "none" }} 
                   onChange={async (e) => {
