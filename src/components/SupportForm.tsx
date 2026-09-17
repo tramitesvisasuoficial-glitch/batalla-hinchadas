@@ -30,6 +30,8 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const [pulse, setPulse] = useState(false);
   const [lastAmount, setLastAmount] = useState(0);
 
+  const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
+
   // Pulse animation on amount change
   useEffect(() => {
     if (currentAmount > 0 && currentAmount !== lastAmount) {
@@ -89,7 +91,7 @@ export default function SupportForm({ battle, initialTeamATotal, initialTeamBTot
   const total = currentATotal + currentBTotal;
   const progressA = total === 0 ? 50 : (currentATotal / total) * 100;
 
-  const currentAmount = customAmount ? parseFloat(customAmount) || 0 : amount;
+  // Definition moved up
   const isPlayable = battle.status === "active" && timeStatus === "active";
 
   useEffect(() => {
